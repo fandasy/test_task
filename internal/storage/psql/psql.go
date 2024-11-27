@@ -12,6 +12,7 @@ import (
 	"log/slog"
 	"strings"
 	"test_task/internal/config"
+	"test_task/internal/models"
 	"test_task/internal/storage"
 	"test_task/pkg/e"
 	"time"
@@ -163,10 +164,10 @@ func (s *Storage) DeleteSong(ctx context.Context, songID int) error {
 	return nil
 }
 
-func (s *Storage) GetSongText(ctx context.Context, songID int64) (*storage.SongResp, error) {
+func (s *Storage) GetSongText(ctx context.Context, songID int64) (*models.SongTextResp, error) {
 	const fn = "psql.GetSongText"
 
-	var songResp storage.SongResp
+	var songResp models.SongTextResp
 
 	q := `SELECT song, song_text FROM songs WHERE id = $1;`
 
@@ -183,7 +184,7 @@ func (s *Storage) GetSongText(ctx context.Context, songID int64) (*storage.SongR
 	return &songResp, nil
 }
 
-func (s *Storage) GetLibrary(ctx context.Context, filters *storage.GetLibraryFilters) (map[int64]*storage.GroupResp, error) {
+func (s *Storage) GetLibrary(ctx context.Context, filters *storage.GetLibraryFilters) (map[int64]*models.Group, error) {
 	const fn = "psql.GetLibrary"
 
 	query := `
@@ -257,33 +258,31 @@ func (s *Storage) GetLibrary(ctx context.Context, filters *storage.GetLibraryFil
 	}
 	defer rows.Close()
 
-	groupMap := make(map[int64]*storage.GroupResp)
+	groupMap := make(map[int64]*models.Group)
 
 	for rows.Next() {
 		var (
-			g  storage.GroupResp
-			s  storage.SongResp
+			g  models.Group
+			s  models.Song
 			rd time.Time
 		)
 
 		err := rows.Scan(&g.GroupID, &g.GroupName, &s.SongID, &s.SongName, &rd, &s.SongText, &s.Link)
 		if err != nil {
-			return nil, e.Wrap(fn, storage.ErrNothingFound)
+			continue
 		}
 
 		s.ReleaseDate = rd.Format("02.01.2006")
 
 		if _, exists := groupMap[g.GroupID]; !exists {
-			groupMap[g.GroupID] = &storage.GroupResp{
+			groupMap[g.GroupID] = &models.Group{
 				GroupID:   g.GroupID,
 				GroupName: g.GroupName,
-				SongInfo:  []storage.SongResp{},
+				SongInfo:  []models.Song{},
 			}
 		}
 
-		if s.SongID != 0 {
-			groupMap[g.GroupID].SongInfo = append(groupMap[g.GroupID].SongInfo, s)
-		}
+		groupMap[g.GroupID].SongInfo = append(groupMap[g.GroupID].SongInfo, s)
 	}
 
 	if len(groupMap) == 0 {

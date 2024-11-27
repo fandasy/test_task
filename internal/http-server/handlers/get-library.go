@@ -7,14 +7,28 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"test_task/internal/models"
 	"test_task/internal/storage"
 	"time"
 )
 
-type GetLibraryResponse struct {
-	Library []storage.GroupResp `json:"library"`
-}
-
+// GetLibrary godoc
+// @Summary Get library
+// @Produce  json
+// @Param offset query int false " "
+// @Param limit query int false " "
+// @Param group_id query int false " "
+// @Param group query string false " "
+// @Param song_id query int false " "
+// @Param song query string false " "
+// @Param release_date query string false " "
+// @Param song_text query string false " "
+// @Param link query string false " "
+// @Success 200 {object} models.GetLibraryResponse
+// @Success 404 {object} ErrResponse
+// @Failure 400 {object} ErrResponse
+// @Failure 500
+// @Router /library [get]
 func (h *Handler) GetLibrary(ctxTimeout time.Duration) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		const fn = "handlers.GetLibrary"
@@ -51,7 +65,7 @@ func (h *Handler) GetLibrary(ctxTimeout time.Duration) gin.HandlerFunc {
 			if err != nil {
 				log.Debug("offset is not a number")
 
-				c.JSON(http.StatusBadRequest, gin.H{"error": "offset is not a number"})
+				c.JSON(http.StatusBadRequest, ErrResp("offset is not a number"))
 
 				return
 			}
@@ -62,7 +76,7 @@ func (h *Handler) GetLibrary(ctxTimeout time.Duration) gin.HandlerFunc {
 			if err != nil {
 				log.Debug("limit is not a number")
 
-				c.JSON(http.StatusBadRequest, gin.H{"error": "limit is not a number"})
+				c.JSON(http.StatusBadRequest, ErrResp("limit is not a number"))
 
 				return
 			}
@@ -73,7 +87,7 @@ func (h *Handler) GetLibrary(ctxTimeout time.Duration) gin.HandlerFunc {
 			if err != nil {
 				log.Debug("groupID is not a number")
 
-				c.JSON(http.StatusBadRequest, gin.H{"error": "groupID is not a number"})
+				c.JSON(http.StatusBadRequest, ErrResp("groupID is not a number"))
 
 				return
 			}
@@ -84,7 +98,7 @@ func (h *Handler) GetLibrary(ctxTimeout time.Duration) gin.HandlerFunc {
 			if err != nil {
 				log.Debug("songID is not a number")
 
-				c.JSON(http.StatusBadRequest, gin.H{"error": "songID is not a number"})
+				c.JSON(http.StatusBadRequest, ErrResp("songID is not a number"))
 
 				return
 			}
@@ -95,7 +109,7 @@ func (h *Handler) GetLibrary(ctxTimeout time.Duration) gin.HandlerFunc {
 			if err != nil {
 				log.Debug(err.Error())
 
-				c.JSON(http.StatusBadRequest, gin.H{"error": "release date is invalid"})
+				c.JSON(http.StatusBadRequest, ErrResp("release date is invalid"))
 
 				return
 			}
@@ -126,24 +140,24 @@ func (h *Handler) GetLibrary(ctxTimeout time.Duration) gin.HandlerFunc {
 			if errors.Is(err, storage.ErrNothingFound) {
 				log.Debug(err.Error(), slog.Any("filters", filters))
 
-				c.JSON(http.StatusNotFound, gin.H{"error": "nothing found"})
+				c.JSON(http.StatusNotFound, ErrResp("nothing found"))
 
 				return
 			}
 			log.Error(err.Error())
 
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+			c.Status(http.StatusInternalServerError)
 
 			return
 		}
 
-		var response GetLibraryResponse
+		var response models.GetLibraryResponse
 
 		for _, group := range groupMap {
 			response.Library = append(response.Library, *group)
 		}
 
-		log.Debug("library data received successfully", slog.Any("filters", filters))
+		log.Debug("library data received successfully", slog.Any("filters", *filters))
 
 		c.JSON(http.StatusOK, response)
 	}

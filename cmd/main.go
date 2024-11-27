@@ -4,11 +4,14 @@ import (
 	"context"
 	"errors"
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+	_ "test_task/docs"
 	your_api "test_task/internal/clients/your-api"
 	"test_task/internal/config"
 	"test_task/internal/http-server/handlers"
@@ -20,6 +23,9 @@ import (
 	"time"
 )
 
+// @title           Music Library API
+// @version         1.0.0
+// @description     API for managing a music library
 func main() {
 
 	cfg, err := config.LoadEnvConfig("config.env")
@@ -42,8 +48,8 @@ func main() {
 
 	router := gin.New()
 
-	router.Use(logger.Middleware(log))
 	router.Use(cors.Middleware()) // for OPTIONS requests
+	router.Use(logger.Middleware(log))
 	router.Use(gin.Recovery())
 
 	router.POST("/song", handler.SaveSong(30*time.Second))
@@ -51,6 +57,8 @@ func main() {
 	router.GET("/song/:id/text", handler.GetSongText(30*time.Second))
 	router.DELETE("/song/:id", handler.DeleteSong(30*time.Second))
 	router.PATCH("/song/:id", handler.SongUpdate(30*time.Second))
+
+	router.GET("/swagger/:any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	log.Info("server starting", slog.String("address", cfg.Addr))
 

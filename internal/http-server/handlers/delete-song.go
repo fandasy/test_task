@@ -7,10 +7,20 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"test_task/internal/models"
 	"test_task/internal/storage"
 	"time"
 )
 
+// DeleteSong godoc
+// @Summary Delete song
+// @Produce  json
+// @Param id path int true "Song ID"
+// @Success 200 {object} models.DeleteSongResp
+// @Success 404 {object} ErrResponse
+// @Failure 400 {object} ErrResponse
+// @Failure 500
+// @Router /song/{id} [delete]
 func (h *Handler) DeleteSong(ctxTimeout time.Duration) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		const fn = "handlers.DeleteSong"
@@ -27,7 +37,7 @@ func (h *Handler) DeleteSong(ctxTimeout time.Duration) gin.HandlerFunc {
 		if idStr == "" {
 			log.Debug("id is empty")
 
-			c.JSON(http.StatusBadRequest, gin.H{"error": "id is empty"})
+			c.JSON(http.StatusBadRequest, ErrResp("id is empty"))
 
 			return
 		}
@@ -36,7 +46,7 @@ func (h *Handler) DeleteSong(ctxTimeout time.Duration) gin.HandlerFunc {
 		if err != nil {
 			log.Debug("id is invalid", slog.Int("ID", id))
 
-			c.JSON(http.StatusBadRequest, gin.H{"error": "id is invalid"})
+			c.JSON(http.StatusBadRequest, ErrResp("id is invalid"))
 
 			return
 		}
@@ -47,20 +57,23 @@ func (h *Handler) DeleteSong(ctxTimeout time.Duration) gin.HandlerFunc {
 			if errors.Is(err, storage.ErrSongNotFound) {
 				log.Debug(err.Error())
 
-				c.JSON(http.StatusNotFound, gin.H{"error": "song not found"})
+				c.JSON(http.StatusNotFound, ErrResp("song not found"))
 
 				return
 			}
 
 			log.Error(err.Error())
 
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+			c.Status(http.StatusInternalServerError)
 
 			return
 		}
 
 		log.Debug("song deleted", slog.Int("songID", id))
 
-		c.JSON(http.StatusOK, gin.H{"message": "song deleted", "songID": id})
+		c.JSON(http.StatusOK, models.DeleteSongResp{
+			Message: "song deleted",
+			SongID:  id,
+		})
 	}
 }

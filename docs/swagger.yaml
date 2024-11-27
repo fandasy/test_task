@@ -1,0 +1,285 @@
+definitions:
+  handlers.ErrResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  handlers.SaveSongRequest:
+    properties:
+      group:
+        type: string
+      song:
+        type: string
+    required:
+    - group
+    - song
+    type: object
+  handlers.SongUpdateRequest:
+    properties:
+      link:
+        type: string
+      release_date:
+        type: string
+      song_name:
+        type: string
+      song_text:
+        type: string
+    type: object
+  models.DeleteSongResp:
+    properties:
+      message:
+        type: string
+      song_id:
+        type: integer
+    type: object
+  models.GetLibraryResponse:
+    properties:
+      library:
+        items:
+          $ref: '#/definitions/models.Group'
+        type: array
+    type: object
+  models.Group:
+    properties:
+      group_id:
+        type: integer
+      group_name:
+        type: string
+      song_info:
+        items:
+          $ref: '#/definitions/models.Song'
+        type: array
+    type: object
+  models.SaveSongResponse:
+    properties:
+      group_Id:
+        type: integer
+      song_Id:
+        type: integer
+    type: object
+  models.Song:
+    properties:
+      link:
+        type: string
+      release_date:
+        type: string
+      song_id:
+        type: integer
+      song_name:
+        type: string
+      song_text:
+        type: string
+    type: object
+  models.SongTextResp:
+    properties:
+      song_id:
+        type: integer
+      song_name:
+        type: string
+      song_text:
+        type: string
+    type: object
+  models.SongUpdateResponse:
+    properties:
+      song_id:
+        type: integer
+      update_info:
+        $ref: '#/definitions/models.UpdateInfo'
+    type: object
+  models.UpdateInfo:
+    properties:
+      link:
+        type: string
+      release_date:
+        type: string
+      song_name:
+        type: string
+      song_text:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: API for managing a music library
+  title: Music Library API
+  version: 1.0.0
+paths:
+  /library:
+    get:
+      parameters:
+      - description: ' '
+        in: query
+        name: offset
+        type: integer
+      - description: ' '
+        in: query
+        name: limit
+        type: integer
+      - description: ' '
+        in: query
+        name: group_id
+        type: integer
+      - description: ' '
+        in: query
+        name: group
+        type: string
+      - description: ' '
+        in: query
+        name: song_id
+        type: integer
+      - description: ' '
+        in: query
+        name: song
+        type: string
+      - description: ' '
+        in: query
+        name: release_date
+        type: string
+      - description: ' '
+        in: query
+        name: song_text
+        type: string
+      - description: ' '
+        in: query
+        name: link
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.GetLibraryResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrResponse'
+        "500":
+          description: Internal Server Error
+      summary: Get library
+  /song:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Group and Song name
+        in: body
+        name: song
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.SaveSongRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.SaveSongResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrResponse'
+        "500":
+          description: Internal Server Error
+      summary: Save song
+  /song/{id}:
+    delete:
+      parameters:
+      - description: Song ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.DeleteSongResp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrResponse'
+        "500":
+          description: Internal Server Error
+      summary: Delete song
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Song ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update data
+        in: body
+        name: update_data
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.SongUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.SongUpdateResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrResponse'
+        "500":
+          description: Internal Server Error
+      summary: Update song data
+  /song/{id}/text:
+    get:
+      parameters:
+      - description: Song ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: ' '
+        in: query
+        name: offset
+        type: integer
+      - description: ' '
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.SongTextResp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrResponse'
+        "500":
+          description: Internal Server Error
+      summary: Get song text
+swagger: "2.0"

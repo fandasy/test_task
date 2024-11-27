@@ -13,6 +13,17 @@ import (
 	"time"
 )
 
+// GetSongText godoc
+// @Summary Get song text
+// @Produce  json
+// @Param id path int true "Song ID"
+// @Param offset query int false " "
+// @Param limit query int false " "
+// @Success 200 {object} models.SongTextResp
+// @Success 404 {object} ErrResponse
+// @Failure 400 {object} ErrResponse
+// @Failure 500
+// @Router /song/{id}/text [get]
 func (h *Handler) GetSongText(ctxTimeout time.Duration) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		const fn = "handlers.GetSongText"
@@ -29,7 +40,7 @@ func (h *Handler) GetSongText(ctxTimeout time.Duration) gin.HandlerFunc {
 		if idStr == "" {
 			log.Debug("id is empty")
 
-			c.JSON(http.StatusBadRequest, gin.H{"error": "id is empty"})
+			c.JSON(http.StatusBadRequest, ErrResp("id is empty"))
 
 			return
 		}
@@ -38,7 +49,7 @@ func (h *Handler) GetSongText(ctxTimeout time.Duration) gin.HandlerFunc {
 		if err != nil {
 			log.Debug("id is invalid", slog.Int("ID", id))
 
-			c.JSON(http.StatusBadRequest, gin.H{"error": "id is invalid"})
+			c.JSON(http.StatusBadRequest, ErrResp("id is invalid"))
 
 			return
 		}
@@ -58,7 +69,7 @@ func (h *Handler) GetSongText(ctxTimeout time.Duration) gin.HandlerFunc {
 			if err != nil {
 				log.Debug("offset is not a number")
 
-				c.JSON(http.StatusBadRequest, gin.H{"error": "offset is not a number"})
+				c.JSON(http.StatusBadRequest, ErrResp("offset is not a number"))
 
 				return
 			}
@@ -69,7 +80,7 @@ func (h *Handler) GetSongText(ctxTimeout time.Duration) gin.HandlerFunc {
 			if err != nil {
 				log.Debug("limit is not a number")
 
-				c.JSON(http.StatusBadRequest, gin.H{"error": "limit is not a number"})
+				c.JSON(http.StatusBadRequest, ErrResp("limit is not a number"))
 
 				return
 			}
@@ -80,13 +91,13 @@ func (h *Handler) GetSongText(ctxTimeout time.Duration) gin.HandlerFunc {
 			if errors.Is(err, storage.ErrSongNotFound) {
 				log.Debug(err.Error())
 
-				c.JSON(http.StatusNotFound, gin.H{"error": "song not found"})
+				c.JSON(http.StatusNotFound, ErrResp("song not found"))
 
 				return
 			}
 			log.Error(err.Error())
 
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.Status(http.StatusInternalServerError)
 
 			return
 		}

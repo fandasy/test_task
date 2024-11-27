@@ -19,3 +19,11 @@ func New(db storage.Storage, log *slog.Logger, yourApi *your_api.Client) *Handle
 		yourApi: yourApi,
 	}
 }
+
+type ErrResponse struct {
+	Error string `json:"error"`
+}
+
+func ErrResp(msg string) ErrResponse {
+	return ErrResponse{msg}
+}

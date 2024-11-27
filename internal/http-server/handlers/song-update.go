@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 	"test_task/internal/lib/l/sl"
+	"test_task/internal/models"
 	"test_task/internal/storage"
 	"test_task/pkg/validate"
 	"time"
@@ -20,6 +21,17 @@ type SongUpdateRequest struct {
 	Link        string `json:"link,omitempty"`
 }
 
+// SongUpdate godoc
+// @Summary Update song data
+// @Accept  json
+// @Produce  json
+// @Param id path int true "Song ID"
+// @Param update_data body SongUpdateRequest true "Update data"
+// @Success 200 {object} models.SongUpdateResponse
+// @Success 404 {object} ErrResponse
+// @Failure 400 {object} ErrResponse
+// @Failure 500
+// @Router /song/{id} [patch]
 func (h *Handler) SongUpdate(ctxTimeout time.Duration) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		const fn = "handlers.SongUpdate"
@@ -71,7 +83,7 @@ func (h *Handler) SongUpdate(ctxTimeout time.Duration) gin.HandlerFunc {
 			if err != nil {
 				log.Debug(err.Error())
 
-				c.JSON(http.StatusBadRequest, gin.H{"error": "release date is invalid"})
+				c.JSON(http.StatusBadRequest, gin.H{"error": "release date is invalid, correct format: 16.07.2006"})
 
 				return
 			}
@@ -111,17 +123,24 @@ func (h *Handler) SongUpdate(ctxTimeout time.Duration) gin.HandlerFunc {
 			default:
 				log.Debug(err.Error())
 
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+				c.Status(http.StatusInternalServerError)
 
 				return
 			}
 		}
 
 		log.Debug("song data update",
-			slog.Any("data", req),
 			slog.Int("songID", id),
+			slog.Any("data", req),
 		)
 
-		c.JSON(http.StatusOK, gin.H{"update_info": req, "song_id": id})
+		c.JSON(http.StatusOK, models.SongUpdateResponse{
+			SongID: id,
+			UpdateInfo: models.UpdateInfo{
+				SongName:    req.SongName,
+				ReleaseDate: req.ReleaseDate,
+				SongText:    req.SongText,
+				Link:        req.Link,
+			}})
 	}
 }
