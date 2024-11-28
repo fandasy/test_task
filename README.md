@@ -43,6 +43,8 @@ Swagger files are located in the ./docs directory
 
 Swagger GUI path: localhost:8080/swagger/index.html
 
+If you are using a different Swagger GUI, be sure to change the address and port to your values
+
 ### Important points
 
 1. Implementation of the request to the third-party API, located at /internal/clients/your-api
