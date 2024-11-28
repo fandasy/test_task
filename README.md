@@ -47,4 +47,5 @@ Swagger GUI path: localhost:8080/swagger/index.html
 1. Implementation of the request to the third-party API, located at /internal/clients/your-api
 2. The implementation of handlers is located at the path ./internal/http-server/handlers
 3. Implementation of all database logic is located at the path ./internal/storage/psql
-4. When requesting an update, check the Link and Release date fields, as they pass validation, the time should be in DD.MM.YYYY format.
+4. When requesting an update, check the Link and Release date fields, as they pass validation, the time should be in DD.MM.YYYY format and the link should be valid
+
