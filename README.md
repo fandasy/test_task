@@ -7,6 +7,7 @@ To start the project, use the template config.env file
 
 (the file name must be "config")
 
+Don't forget to change the data for connecting to the database and YOUR_API_HOST
 
 ```
 # local - level: Debug, Type: Text
