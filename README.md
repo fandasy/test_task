@@ -3,11 +3,11 @@ Test Task: Music Library API
 
 ### Environment file
 
-To start the project, use the template config.env file
+Чтобы запустить проект, используйте шаблонный файл config.env
 
-(the file name must be "config")
+(имя файла должно быть «config»)
 
-Don't forget to change the data for connecting to the database and YOUR_API_HOST
+Не забудьте изменить данные для подключения к базе данных и YOUR_API_HOST
 
 ```
 # local - level: Debug, Type: Text
@@ -25,14 +25,14 @@ DB_NAME=yourDB
 DB_USER=yourUser
 DB_PASSWORD=yourPassword
 
-# your api host (http prefix must not be used)
+# your api host (не нужно ставить префикс http)
 # example: localhost:1234 or yourApiHost.com/api/v5 or yourApiHost.com
 YOUR_API_HOST=example.com
 ```
 
 ### Swagger
 
-Swagger files are located in the ./docs directory
+Файлы Swagger находятся в каталоге ./docs.
 
 ```
   /docs
@@ -43,12 +43,12 @@ Swagger files are located in the ./docs directory
 
 Swagger GUI path: localhost:8080/swagger/index.html
 
-If you are using a different Swagger GUI, be sure to change the address and port to your values
+Если вы используете другой графический интерфейс Swagger, обязательно измените адрес и порт на свои значения
 
 ### Important points
 
-1. Implementation of the request to the third-party API, located at /internal/clients/your-api
-2. The implementation of handlers is located at the path ./internal/http-server/handlers
-3. Implementation of all database logic is located at the path ./internal/storage/psql
-4. When requesting an [PATCH] update, check the Link and Release date fields, as they pass validation, the time should be in DD.MM.YYYY format and the link should be valid
+1. Реализация запроса к стороннему API, расположенному по адресу /internal/clients/your-api
+2. Реализация handlers находится по пути ./internal/http-server/handlers
+3. Реализация всей логики базы данных находится по пути ./internal/storage/psql
+4. При запросе обновления [PATCH] проверьте поля Link и Release date, так как они проходят валидацию, время должно быть в формате DD.MM.YYYY, а ссылка должна быть действительной
 
