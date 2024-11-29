@@ -41,7 +41,7 @@ YOUR_API_HOST=example.com
     swagger.yaml
 ```
 
-Swagger GUI path: localhost:8080/swagger/index.html
+Swagger GUI path: [GET] localhost:8080/swagger/index.html
 
 Если вы используете другой графический интерфейс Swagger, обязательно измените адрес и порт на свои значения
 
