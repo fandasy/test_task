@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"log/slog"
 	"net/http"
+	"reflect"
 	"strconv"
 	"test_task/internal/lib/l/sl"
 	"test_task/internal/models"
@@ -15,10 +16,17 @@ import (
 )
 
 type SongUpdateRequest struct {
-	SongName    string `json:"song_name,omitempty"`
-	ReleaseDate string `json:"release_date,omitempty"`
-	SongText    string `json:"song_text,omitempty"`
-	Link        string `json:"link,omitempty"`
+	SongName    *string `json:"song_name,omitempty"`
+	ReleaseDate *string `json:"release_date,omitempty"`
+	SongText    *string `json:"song_text,omitempty"`
+	Link        *string `json:"link,omitempty"`
+}
+
+type parsedSongUpdateReq struct {
+	songName    string
+	releaseDate string
+	songText    string
+	link        string
 }
 
 // SongUpdate godoc
@@ -48,7 +56,7 @@ func (h *Handler) SongUpdate(ctxTimeout time.Duration) gin.HandlerFunc {
 		if idStr == "" {
 			log.Debug("id is empty")
 
-			c.JSON(http.StatusBadRequest, gin.H{"error": "id is empty"})
+			c.JSON(http.StatusBadRequest, ErrResp("id is empty"))
 
 			return
 		}
@@ -57,7 +65,7 @@ func (h *Handler) SongUpdate(ctxTimeout time.Duration) gin.HandlerFunc {
 		if err != nil {
 			log.Debug("id is invalid", slog.Int("ID", id))
 
-			c.JSON(http.StatusBadRequest, gin.H{"error": "id is invalid"})
+			c.JSON(http.StatusBadRequest, ErrResp("id is invalid"))
 
 			return
 		}
@@ -69,41 +77,43 @@ func (h *Handler) SongUpdate(ctxTimeout time.Duration) gin.HandlerFunc {
 		if err := c.ShouldBindJSON(&req); err != nil {
 			log.Error("failed to decode request", sl.Err(err))
 
-			c.JSON(http.StatusBadRequest, gin.H{"error": "incorrect json"})
+			c.JSON(http.StatusBadRequest, ErrResp("incorrect json"))
 
 			return
 		}
 
-		log.Debug("request body decoded", slog.Any("req", req))
+		preq := parsingReq(req)
+
+		log.Debug("request body decoded", slog.Any("req", preq))
 
 		var releaseDate time.Time
 
-		if req.ReleaseDate != "" {
-			releaseDate, err = time.Parse("02.01.2006", req.ReleaseDate)
+		if preq.releaseDate != "" {
+			releaseDate, err = time.Parse("02.01.2006", preq.releaseDate)
 			if err != nil {
 				log.Debug(err.Error())
 
-				c.JSON(http.StatusBadRequest, gin.H{"error": "release date is invalid, correct format: 16.07.2006"})
+				c.JSON(http.StatusBadRequest, ErrResp("release date is invalid, correct format: DD.MM.YYYY"))
 
 				return
 			}
 		}
 
-		if req.Link != "" {
-			if !validate.Link(ctx, req.Link) {
-				log.Debug("request link is invalid", slog.String("link", req.Link))
+		if !(preq.link == "" || preq.link == "NULL") {
+			if !validate.Link(ctx, preq.link) {
+				log.Debug("request link is invalid", slog.String("link", preq.link))
 
-				c.JSON(http.StatusBadRequest, gin.H{"error": "link is invalid"})
+				c.JSON(http.StatusBadRequest, ErrResp("link is invalid"))
 
 				return
 			}
 		}
 
 		songInfo := &storage.SongInfo{
-			Song: req.SongName,
+			Song: preq.songName,
 			Date: releaseDate,
-			Text: req.SongText,
-			Link: req.Link,
+			Text: preq.songText,
+			Link: preq.link,
 		}
 
 		if err := h.db.UpdateSong(ctx, id, songInfo); err != nil {
@@ -111,13 +121,13 @@ func (h *Handler) SongUpdate(ctxTimeout time.Duration) gin.HandlerFunc {
 			case errors.Is(err, storage.ErrNoFieldsUpdate):
 				log.Debug(err.Error())
 
-				c.JSON(http.StatusBadRequest, gin.H{"error": "no fields to update"})
+				c.JSON(http.StatusBadRequest, ErrResp("no fields to update"))
 
 				return
 			case errors.Is(err, storage.ErrSongNotFound):
 				log.Debug(err.Error())
 
-				c.JSON(http.StatusNotFound, gin.H{"error": "song not found"})
+				c.JSON(http.StatusNotFound, ErrResp("song not found"))
 
 				return
 			default:
@@ -131,16 +141,59 @@ func (h *Handler) SongUpdate(ctxTimeout time.Duration) gin.HandlerFunc {
 
 		log.Debug("song data update",
 			slog.Int("songID", id),
-			slog.Any("data", req),
+			slog.Any("data", preq),
 		)
 
 		c.JSON(http.StatusOK, models.SongUpdateResponse{
 			SongID: id,
 			UpdateInfo: models.UpdateInfo{
-				SongName:    req.SongName,
-				ReleaseDate: req.ReleaseDate,
-				SongText:    req.SongText,
-				Link:        req.Link,
+				SongName:    preq.songName,
+				ReleaseDate: preq.releaseDate,
+				SongText:    preq.songText,
+				Link:        preq.link,
 			}})
 	}
+}
+
+func parsingReq(input interface{}) parsedSongUpdateReq {
+	var pr parsedSongUpdateReq
+	val := reflect.ValueOf(input)
+
+	numFields := val.NumField()
+
+	for i := 0; i < numFields; i++ {
+		value := val.Field(i)
+
+		if value.Kind() == reflect.Ptr && !value.IsNil() {
+			elemValue := value.Elem().String()
+			switch i {
+			case 0:
+				if elemValue == "" {
+					pr.songName = "NULL"
+				} else {
+					pr.songName = elemValue
+				}
+			case 1:
+				if elemValue == "" {
+					pr.releaseDate = "01.01.0001"
+				} else {
+					pr.releaseDate = elemValue
+				}
+			case 2:
+				if elemValue == "" {
+					pr.songText = "NULL"
+				} else {
+					pr.songText = elemValue
+				}
+			case 3:
+				if elemValue == "" {
+					pr.link = "NULL"
+				} else {
+					pr.link = elemValue
+				}
+			}
+		}
+	}
+
+	return pr
 }
